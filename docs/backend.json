@@ -1,0 +1,501 @@
+{
+  "entities": {
+    "UserProfile": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "UserProfile",
+      "type": "object",
+      "description": "Stores user-specific settings and preferences for the FocusFlow application. This entity is directly linked to an external authentication system's user ID.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the UserProfile, which is also the external userId from the authentication system."
+        },
+        "darkModeEnabled": {
+          "type": "boolean",
+          "description": "Indicates if the user prefers dark mode."
+        },
+        "customFocusDurationMinutes": {
+          "type": "number",
+          "description": "User's custom focus duration for the study timer in minutes."
+        },
+        "customBreakDurationMinutes": {
+          "type": "number",
+          "description": "User's custom break duration for the study timer in minutes."
+        },
+        "autoSuggestEnabled": {
+          "type": "boolean",
+          "description": "Indicates if smart suggestions for study times are enabled."
+        },
+        "motivationalQuotesEnabled": {
+          "type": "boolean",
+          "description": "Indicates if motivational quotes should be shown on the dashboard."
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "The date and time when the user profile was created.",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "The date and time when the user profile was last updated.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "darkModeEnabled",
+        "customFocusDurationMinutes",
+        "customBreakDurationMinutes",
+        "autoSuggestEnabled",
+        "motivationalQuotesEnabled",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "Task": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Task",
+      "type": "object",
+      "description": "Represents a single task managed by the user within FocusFlow.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Task entity."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to the UserProfile this task belongs to. (Relationship: UserProfile 1:N Task)"
+        },
+        "title": {
+          "type": "string",
+          "description": "The brief title of the task."
+        },
+        "description": {
+          "type": "string",
+          "description": "A detailed description of the task."
+        },
+        "priority": {
+          "type": "string",
+          "description": "The priority level of the task (e.g., Low, Medium, High)."
+        },
+        "dueDate": {
+          "type": "string",
+          "description": "The date and time the task is due.",
+          "format": "date-time"
+        },
+        "reminderDate": {
+          "type": "string",
+          "description": "The date and time for a reminder notification for the task. (Optional)",
+          "format": "date-time"
+        },
+        "isCompleted": {
+          "type": "boolean",
+          "description": "Indicates if the task has been marked as completed."
+        },
+        "completedAt": {
+          "type": "string",
+          "description": "The date and time when the task was completed. (Optional, only present if `isCompleted` is true)",
+          "format": "date-time"
+        },
+        "subjectTagIds": {
+          "type": "array",
+          "description": "References to SubjectTag entities associated with this task. (Relationship: SubjectTag N:N Task)",
+          "items": {
+            "type": "string"
+          }
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "The date and time when the task was created.",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "The date and time when the task was last updated.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "title",
+        "priority",
+        "dueDate",
+        "isCompleted",
+        "subjectTagIds",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "SubjectTag": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "SubjectTag",
+      "type": "object",
+      "description": "Represents a customizable tag that users can associate with tasks and study sessions.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the SubjectTag entity."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to the UserProfile this tag belongs to. (Relationship: UserProfile 1:N SubjectTag)"
+        },
+        "name": {
+          "type": "string",
+          "description": "The name of the subject tag (e.g., 'Math', 'History')."
+        },
+        "color": {
+          "type": "string",
+          "description": "A color code (e.g., hex string) for UI representation of the tag."
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "The date and time when the subject tag was created.",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "The date and time when the subject tag was last updated.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "name",
+        "color",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "StudySession": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "StudySession",
+      "type": "object",
+      "description": "Records details of a single study or break session conducted using the FocusFlow timer.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the StudySession entity."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to the UserProfile this session belongs to. (Relationship: UserProfile 1:N StudySession)"
+        },
+        "startTime": {
+          "type": "string",
+          "description": "The date and time when the session started.",
+          "format": "date-time"
+        },
+        "endTime": {
+          "type": "string",
+          "description": "The date and time when the session ended.",
+          "format": "date-time"
+        },
+        "durationMinutes": {
+          "type": "number",
+          "description": "The duration of the session in minutes."
+        },
+        "type": {
+          "type": "string",
+          "description": "The type of session (e.g., 'Focus', 'Break', 'Custom Focus', 'Custom Break')."
+        },
+        "subjectTagId": {
+          "type": "string",
+          "description": "Reference to the SubjectTag associated with this study session. (Relationship: SubjectTag 1:N StudySession) (Optional, a break session might not have one)"
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "The date and time when the study session was created.",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "The date and time when the study session was last updated.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "startTime",
+        "endTime",
+        "durationMinutes",
+        "type",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "Goal": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Goal",
+      "type": "object",
+      "description": "Represents a weekly or monthly goal set by the user, with progress tracking.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Goal entity."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to the UserProfile this goal belongs to. (Relationship: UserProfile 1:N Goal)"
+        },
+        "title": {
+          "type": "string",
+          "description": "The title of the goal."
+        },
+        "description": {
+          "type": "string",
+          "description": "A detailed description of the goal. (Optional)"
+        },
+        "type": {
+          "type": "string",
+          "description": "The type of goal (e.g., 'Weekly', 'Monthly')."
+        },
+        "startDate": {
+          "type": "string",
+          "description": "The start date of the goal period.",
+          "format": "date"
+        },
+        "endDate": {
+          "type": "string",
+          "description": "The end date of the goal period.",
+          "format": "date"
+        },
+        "targetValue": {
+          "type": "number",
+          "description": "The target value to achieve for the goal (e.g., total study hours, number of tasks completed)."
+        },
+        "currentValue": {
+          "type": "number",
+          "description": "The current progress value towards the goal."
+        },
+        "isCompleted": {
+          "type": "boolean",
+          "description": "Indicates if the goal has been met."
+        },
+        "completedAt": {
+          "type": "string",
+          "description": "The date and time when the goal was completed. (Optional, only present if `isCompleted` is true)",
+          "format": "date-time"
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "The date and time when the goal was created.",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "The date and time when the goal was last updated.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "title",
+        "type",
+        "startDate",
+        "endDate",
+        "targetValue",
+        "currentValue",
+        "isCompleted",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "DailyScheduleEntry": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "DailyScheduleEntry",
+      "type": "object",
+      "description": "Represents a scheduled event or task block in the user's daily planner view.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the DailyScheduleEntry entity."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to the UserProfile this schedule entry belongs to. (Relationship: UserProfile 1:N DailyScheduleEntry)"
+        },
+        "startTime": {
+          "type": "string",
+          "description": "The date and time when the scheduled entry begins.",
+          "format": "date-time"
+        },
+        "endTime": {
+          "type": "string",
+          "description": "The date and time when the scheduled entry ends.",
+          "format": "date-time"
+        },
+        "title": {
+          "type": "string",
+          "description": "A brief title for the scheduled entry."
+        },
+        "description": {
+          "type": "string",
+          "description": "A detailed description of the scheduled entry. (Optional)"
+        },
+        "taskId": {
+          "type": "string",
+          "description": "Reference to a Task if this schedule entry is for a specific task. (Relationship: Task 1:N DailyScheduleEntry) (Optional)"
+        },
+        "subjectTagId": {
+          "type": "string",
+          "description": "Reference to a SubjectTag if this schedule entry is focused on a specific subject. (Relationship: SubjectTag 1:N DailyScheduleEntry) (Optional)"
+        },
+        "isCompleted": {
+          "type": "boolean",
+          "description": "Indicates if the scheduled activity was completed. (Optional)"
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "The date and time when the schedule entry was created.",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "The date and time when the schedule entry was last updated.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "startTime",
+        "endTime",
+        "title",
+        "createdAt",
+        "updatedAt"
+      ]
+    }
+  },
+  "auth": {
+    "providers": [
+      "password",
+      "anonymous"
+    ]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "/user_profiles/{userId}",
+        "definition": {
+          "entityName": "UserProfile",
+          "schema": {
+            "$ref": "#/backend/entities/UserProfile"
+          },
+          "description": "Stores individual user settings and preferences. The document ID (`userId`) directly corresponds to the Firebase Authentication UID. This document acts as the root for all user-owned subcollections and includes an 'id' field matching the 'userId' path parameter for authorization independence.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier for the user, matching their Firebase Authentication UID."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/user_profiles/{userId}/tasks/{taskId}",
+        "definition": {
+          "entityName": "Task",
+          "schema": {
+            "$ref": "#/backend/entities/Task"
+          },
+          "description": "A subcollection holding all tasks created by a specific user. Each task document includes a 'userId' field that must match the parent 'userId' from the path, ensuring authorization independence.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier for the user who owns this task."
+            },
+            {
+              "name": "taskId",
+              "description": "The unique identifier for the task."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/user_profiles/{userId}/subject_tags/{subjectTagId}",
+        "definition": {
+          "entityName": "SubjectTag",
+          "schema": {
+            "$ref": "#/backend/entities/SubjectTag"
+          },
+          "description": "A subcollection containing all custom subject tags defined by a specific user. Each subject tag document includes a 'userId' field matching the parent 'userId' from the path for authorization independence.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier for the user who owns this subject tag."
+            },
+            {
+              "name": "subjectTagId",
+              "description": "The unique identifier for the subject tag."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/user_profiles/{userId}/study_sessions/{sessionId}",
+        "definition": {
+          "entityName": "StudySession",
+          "schema": {
+            "$ref": "#/backend/entities/StudySession"
+          },
+          "description": "A subcollection recording all study and break sessions for a specific user. Each session document includes a 'userId' field matching the parent 'userId' from the path for authorization independence.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier for the user who performed this study session."
+            },
+            {
+              "name": "sessionId",
+              "description": "The unique identifier for the study session."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/user_profiles/{userId}/goals/{goalId}",
+        "definition": {
+          "entityName": "Goal",
+          "schema": {
+            "$ref": "#/backend/entities/Goal"
+          },
+          "description": "A subcollection managing weekly or monthly goals set by a specific user. Each goal document includes a 'userId' field matching the parent 'userId' from the path for authorization independence.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier for the user who set this goal."
+            },
+            {
+              "name": "goalId",
+              "description": "The unique identifier for the goal."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/user_profiles/{userId}/daily_schedule_entries/{scheduleEntryId}",
+        "definition": {
+          "entityName": "DailyScheduleEntry",
+          "schema": {
+            "$ref": "#/backend/entities/DailyScheduleEntry"
+          },
+          "description": "A subcollection containing daily planner entries for a specific user. Each entry document includes a 'userId' field matching the parent 'userId' from the path for authorization independence.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier for the user who created this schedule entry."
+            },
+            {
+              "name": "scheduleEntryId",
+              "description": "The unique identifier for the daily schedule entry."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "The recommended Firestore structure employs a strictly hierarchical, path-based ownership model, ensuring Authorization Independence and enabling simple, robust security rules. All user-specific data is nested directly under a top-level `user_profiles` collection, with each user's profile document identified by their `userId` (which corresponds to `request.auth.uid`).\n\nEach core entity (`Task`, `SubjectTag`, `StudySession`, `Goal`, `DailyScheduleEntry`) is stored as a subcollection under the respective user's profile: `/user_profiles/{userId}/{collectionName}/{documentId}`. This design choice directly addresses the **Authorization Independence** mandate. By embedding the `userId` in the path for every document and requiring the `userId` field within each document to match this path parameter, rules do not need to perform expensive or transaction-breaking `get()` operations on parent documents to determine ownership. The authorization context is fully present within the path and the document itself, making rules atomic and easy to debug.\n\nThis structure also inherently supports **Query Authorization Predicates (QAPs)**. Because all data for a specific user resides exclusively within `/user_profiles/{userId}/...`, any `list` operation initiated by a client can only request data within their authenticated `request.auth.uid`'s path. Security rules can simply enforce `request.auth.uid == userId` for all read operations, preventing users from querying or accessing other users' data. For write operations, an additional check `request.resource.data.userId == userId` ensures data integrity and prevents malicious attempts to assign documents to other users. This segregation of data per user, enforced by the path and document fields, means rules are not acting as filters but as true authorization gates, allowing or denying entire queries based on ownership."
+  }
+}
