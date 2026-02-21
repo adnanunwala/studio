@@ -1,0 +1,11 @@
+
+{
+  "placeholderImages": [
+    {
+      "id": "hero-focus",
+      "description": "A person focusing on work in a clean environment",
+      "imageUrl": "https://picsum.photos/seed/focus1/1200/600",
+      "imageHint": "focus work"
+    }
+  ]
+}
