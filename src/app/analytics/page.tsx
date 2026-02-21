@@ -6,7 +6,8 @@ import { MainNav } from "@/components/layout/main-nav";
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
 import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from "@/components/ui/chart";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Cell, PieChart, Pie } from "recharts";
-import { BarChart3, TrendingUp, PieChart as PieChartIcon } from "lucide-react";
+import { BarChart3, TrendingUp, PieChart as PieChartIcon, Flame, Target, Zap, Clock } from "lucide-react";
+import { useMemo } from "react";
 
 const chartConfig = {
   sessions: {
@@ -22,29 +23,79 @@ const chartConfig = {
 export default function AnalyticsPage() {
   const { sessions, tasks, hydrated } = useFocusStore();
 
+  const stats = useMemo(() => {
+    if (!sessions.length) {
+      return {
+        totalHours: 0,
+        focusScore: 0,
+        streak: 0,
+        tasksDone: tasks.filter(t => t.completed).length,
+        totalTasks: tasks.length
+      };
+    }
+
+    const totalMinutes = sessions.reduce((acc, s) => acc + s.duration, 0);
+    const avgProductivity = sessions.reduce((acc, s) => acc + s.productivity, 0) / sessions.length;
+    
+    // Streak logic
+    const dates = new Set(sessions.map(s => s.date));
+    let streakCount = 0;
+    const today = new Date();
+    
+    for (let i = 0; i < 365; i++) {
+      const checkDate = new Date(today);
+      checkDate.setDate(today.getDate() - i);
+      const dateStr = checkDate.toISOString().split('T')[0];
+      
+      if (dates.has(dateStr)) {
+        streakCount++;
+      } else if (i === 0) {
+        continue;
+      } else {
+        break;
+      }
+    }
+
+    return {
+      totalHours: (totalMinutes / 60).toFixed(1),
+      focusScore: Math.round((avgProductivity / 5) * 100),
+      streak: streakCount,
+      tasksDone: tasks.filter(t => t.completed).length,
+      totalTasks: tasks.length
+    };
+  }, [sessions, tasks]);
+
+  // Data for charts
+  const studyData = useMemo(() => {
+    if (sessions.length === 0) {
+      return [
+        { name: "No Data", value: 1 },
+      ];
+    }
+    const subjectMap: Record<string, number> = {};
+    sessions.forEach(s => {
+      subjectMap[s.subject] = (subjectMap[s.subject] || 0) + s.duration;
+    });
+    return Object.entries(subjectMap).map(([name, value]) => ({ name, value }));
+  }, [sessions]);
+
+  const weeklyData = useMemo(() => {
+    const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+    const data = days.map(day => ({ day, sessions: 0 }));
+    
+    const now = new Date();
+    const startOfWeek = new Date(now.setDate(now.getDate() - now.getDay()));
+    
+    sessions.forEach(s => {
+      const sessionDate = new Date(s.date);
+      if (sessionDate >= startOfWeek) {
+        data[sessionDate.getDay()].sessions += 1;
+      }
+    });
+    return data;
+  }, [sessions]);
+
   if (!hydrated) return null;
-
-  // Mock data for charts if sessions are empty
-  const studyData = sessions.length > 0 ? sessions.map(s => ({
-    name: s.subject,
-    value: s.duration
-  })) : [
-    { name: "Math", value: 120 },
-    { name: "Science", value: 90 },
-    { name: "English", value: 60 },
-    { name: "History", value: 45 },
-    { name: "Coding", value: 180 },
-  ];
-
-  const weeklyData = [
-    { day: "Mon", sessions: 4 },
-    { day: "Tue", sessions: 6 },
-    { day: "Wed", sessions: 3 },
-    { day: "Thu", sessions: 8 },
-    { day: "Fri", sessions: 5 },
-    { day: "Sat", sessions: 2 },
-    { day: "Sun", sessions: 4 },
-  ];
 
   const colors = ["#D0BFFF", "#A0C4FF", "#C1E1C1", "#FDFD96", "#FFB7B2"];
 
@@ -61,40 +112,46 @@ export default function AnalyticsPage() {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <Card className="border-none shadow-sm">
               <CardHeader className="pb-2">
-                <CardTitle className="text-xs font-semibold text-muted-foreground uppercase">Total Study Hours</CardTitle>
+                <CardTitle className="text-xs font-semibold text-muted-foreground uppercase flex items-center gap-2">
+                  <Clock className="h-3 w-3" /> Total Study Hours
+                </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-3xl font-bold">42.5</div>
-                <div className="text-xs text-secondary font-medium mt-1 flex items-center gap-1">
-                  <TrendingUp className="h-3 w-3" /> +12% from last week
-                </div>
+                <div className="text-3xl font-bold">{stats.totalHours}</div>
+                <div className="text-xs text-muted-foreground mt-1">Lifetime focus time</div>
               </CardContent>
             </Card>
             <Card className="border-none shadow-sm">
               <CardHeader className="pb-2">
-                <CardTitle className="text-xs font-semibold text-muted-foreground uppercase">Tasks Done</CardTitle>
+                <CardTitle className="text-xs font-semibold text-muted-foreground uppercase flex items-center gap-2">
+                  <Target className="h-3 w-3" /> Tasks Done
+                </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-3xl font-bold">{tasks.filter(t => t.completed).length}</div>
-                <div className="text-xs text-muted-foreground mt-1">out of {tasks.length} total</div>
+                <div className="text-3xl font-bold">{stats.tasksDone}</div>
+                <div className="text-xs text-muted-foreground mt-1">out of {stats.totalTasks} total</div>
               </CardContent>
             </Card>
             <Card className="border-none shadow-sm">
               <CardHeader className="pb-2">
-                <CardTitle className="text-xs font-semibold text-muted-foreground uppercase">Focus Score</CardTitle>
+                <CardTitle className="text-xs font-semibold text-muted-foreground uppercase flex items-center gap-2">
+                  <Zap className="h-3 w-3" /> Focus Score
+                </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-3xl font-bold">88%</div>
-                <div className="text-xs text-secondary font-medium mt-1">Keep it up!</div>
+                <div className="text-3xl font-bold">{stats.focusScore}%</div>
+                <div className="text-xs text-muted-foreground mt-1">Based on productivity ratings</div>
               </CardContent>
             </Card>
             <Card className="border-none shadow-sm">
               <CardHeader className="pb-2">
-                <CardTitle className="text-xs font-semibold text-muted-foreground uppercase">Streak</CardTitle>
+                <CardTitle className="text-xs font-semibold text-muted-foreground uppercase flex items-center gap-2">
+                  <Flame className="h-3 w-3" /> Current Streak
+                </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-3xl font-bold">5 days</div>
-                <div className="text-xs text-muted-foreground mt-1">Current productivity streak</div>
+                <div className="text-3xl font-bold">{stats.streak} <span className="text-lg font-normal">days</span></div>
+                <div className="text-xs text-muted-foreground mt-1">Consecutive study days</div>
               </CardContent>
             </Card>
           </div>
@@ -104,9 +161,9 @@ export default function AnalyticsPage() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <BarChart3 className="h-5 w-5 text-primary" />
-                  Sessions per Day
+                  Weekly Sessions
                 </CardTitle>
-                <CardDescription>Daily breakdown of your study focus sessions.</CardDescription>
+                <CardDescription>Number of focus sessions this week.</CardDescription>
               </CardHeader>
               <CardContent className="h-[300px]">
                 <ChartContainer config={chartConfig} className="h-full w-full">
@@ -116,7 +173,7 @@ export default function AnalyticsPage() {
                     <YAxis hide />
                     <Bar dataKey="sessions" radius={[4, 4, 0, 0]} fill="hsl(var(--primary))">
                        {weeklyData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={index === 3 ? "hsl(var(--secondary))" : "hsl(var(--primary))"} />
+                        <Cell key={`cell-${index}`} fill={entry.sessions > 0 ? "hsl(var(--primary))" : "hsl(var(--muted)/0.3)"} />
                       ))}
                     </Bar>
                     <ChartTooltip content={<ChartTooltipContent />} />
@@ -131,7 +188,7 @@ export default function AnalyticsPage() {
                   <PieChartIcon className="h-5 w-5 text-secondary" />
                   Time per Subject
                 </CardTitle>
-                <CardDescription>How you're distributing your focus time.</CardDescription>
+                <CardDescription>Distribution of your focus time.</CardDescription>
               </CardHeader>
               <CardContent className="h-[300px] flex items-center justify-center">
                 <ChartContainer config={chartConfig} className="h-full w-full">
