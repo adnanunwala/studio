@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useFocusStore } from "@/lib/store";
@@ -9,7 +8,7 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, CheckCircle2, AlertCircle, Clock } from "lucide-react";
+import { Calendar, CheckCircle2, AlertCircle, Clock, Timer } from "lucide-react";
 import Link from "next/link";
 
 export default function Dashboard() {
