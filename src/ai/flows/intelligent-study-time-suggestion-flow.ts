@@ -84,7 +84,28 @@ export type IntelligentStudyTimeSuggestionOutput = z.infer<
 export async function suggestOptimalStudyTimes(
   input: IntelligentStudyTimeSuggestionInput
 ): Promise<IntelligentStudyTimeSuggestionOutput> {
-  return intelligentStudyTimeSuggestionFlow(input);
+  try {
+    return await intelligentStudyTimeSuggestionFlow(input);
+  } catch (error) {
+    console.error("Genkit Error in suggestOptimalStudyTimes:", error);
+    return {
+      suggestedStudySlots: [
+        { 
+          startTime: "10:00 AM", 
+          endTime: "11:00 AM", 
+          subjectRecommendation: "Mathematics", 
+          reason: "Focus on your most challenging subject early when your mind is fresh." 
+        },
+        { 
+          startTime: "02:00 PM", 
+          endTime: "03:00 PM", 
+          subjectRecommendation: "Review", 
+          reason: "Afternoon slot for review and steady progress." 
+        }
+      ],
+      explanation: "I couldn't generate personalized suggestions right now, but here's a standard study plan to get you started."
+    };
+  }
 }
 
 const prompt = ai.definePrompt({
