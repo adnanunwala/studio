@@ -4,9 +4,20 @@
 import { useFocusStore } from "@/lib/store";
 import { MainNav } from "@/components/layout/main-nav";
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
-import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Cell, PieChart, Pie } from "recharts";
-import { BarChart3, TrendingUp, PieChart as PieChartIcon, Calendar } from "lucide-react";
+import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from "@/components/ui/chart";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Cell, PieChart, Pie } from "recharts";
+import { BarChart3, TrendingUp, PieChart as PieChartIcon } from "lucide-react";
+
+const chartConfig = {
+  sessions: {
+    label: "Sessions",
+    color: "hsl(var(--primary))",
+  },
+  value: {
+    label: "Study Time",
+    color: "hsl(var(--secondary))",
+  }
+} satisfies ChartConfig;
 
 export default function AnalyticsPage() {
   const { sessions, tasks, hydrated } = useFocusStore();
@@ -98,7 +109,7 @@ export default function AnalyticsPage() {
                 <CardDescription>Daily breakdown of your study focus sessions.</CardDescription>
               </CardHeader>
               <CardContent className="h-[300px]">
-                <ResponsiveContainer width="100%" height="100%">
+                <ChartContainer config={chartConfig} className="h-full w-full">
                   <BarChart data={weeklyData}>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
                     <XAxis dataKey="day" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }} />
@@ -108,8 +119,9 @@ export default function AnalyticsPage() {
                         <Cell key={`cell-${index}`} fill={index === 3 ? "hsl(var(--secondary))" : "hsl(var(--primary))"} />
                       ))}
                     </Bar>
+                    <ChartTooltip content={<ChartTooltipContent />} />
                   </BarChart>
-                </ResponsiveContainer>
+                </ChartContainer>
               </CardContent>
             </Card>
 
@@ -122,7 +134,7 @@ export default function AnalyticsPage() {
                 <CardDescription>How you're distributing your focus time.</CardDescription>
               </CardHeader>
               <CardContent className="h-[300px] flex items-center justify-center">
-                 <ResponsiveContainer width="100%" height="100%">
+                <ChartContainer config={chartConfig} className="h-full w-full">
                   <PieChart>
                     <Pie
                       data={studyData}
@@ -137,7 +149,7 @@ export default function AnalyticsPage() {
                     </Pie>
                     <ChartTooltip content={<ChartTooltipContent />} />
                   </PieChart>
-                </ResponsiveContainer>
+                </ChartContainer>
                 <div className="space-y-2 ml-4">
                   {studyData.map((item, i) => (
                     <div key={i} className="flex items-center gap-2 text-xs">
