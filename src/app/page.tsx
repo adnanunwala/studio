@@ -10,15 +10,57 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { Calendar, CheckCircle2, AlertCircle, Clock, Timer } from "lucide-react";
 import Link from "next/link";
+import { useMemo } from "react";
 
 export default function Dashboard() {
-  const { tasks, toggleTask, hydrated } = useFocusStore();
+  const { tasks, sessions, toggleTask, hydrated } = useFocusStore();
+
+  const streak = useMemo(() => {
+    if (!sessions.length) return 0;
+    
+    const dates = new Set(sessions.map(s => s.date));
+    let count = 0;
+    const today = new Date();
+    
+    for (let i = 0; i < 365; i++) {
+      const checkDate = new Date(today);
+      checkDate.setDate(today.getDate() - i);
+      const dateStr = checkDate.toISOString().split('T')[0];
+      
+      if (dates.has(dateStr)) {
+        count++;
+      } else if (i === 0) {
+        // If nothing today, continue checking from yesterday
+        continue;
+      } else {
+        break;
+      }
+    }
+    return count;
+  }, [sessions]);
+
+  const upcomingDeadline = useMemo(() => {
+    const activeTasks = tasks
+      .filter(t => !t.completed && t.dueDate)
+      .sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime());
+    
+    if (!activeTasks.length) return null;
+    
+    const nextTask = activeTasks[0];
+    const diffTime = new Date(nextTask.dueDate).getTime() - new Date().getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    
+    return {
+      title: nextTask.title,
+      daysLeft: diffDays
+    };
+  }, [tasks]);
 
   if (!hydrated) return null;
 
   const todayTasks = tasks.filter(t => !t.completed);
-  const completedToday = tasks.filter(t => t.completed).length;
-  const progress = tasks.length > 0 ? (completedToday / tasks.length) * 100 : 0;
+  const completedTodayCount = tasks.filter(t => t.completed).length;
+  const progress = tasks.length > 0 ? (completedTodayCount / tasks.length) * 100 : 0;
 
   return (
     <div className="min-h-screen bg-background flex">
@@ -97,8 +139,10 @@ export default function Dashboard() {
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="text-4xl font-bold text-foreground">5 <span className="text-lg font-normal text-muted-foreground">days</span></div>
-                    <p className="text-xs text-muted-foreground mt-2">You're doing great! Keep it up.</p>
+                    <div className="text-4xl font-bold text-foreground">{streak} <span className="text-lg font-normal text-muted-foreground">days</span></div>
+                    <p className="text-xs text-muted-foreground mt-2">
+                      {streak > 0 ? "You're doing great! Keep it up." : "Start a session to begin your streak!"}
+                    </p>
                   </CardContent>
                 </Card>
                 <Card className="border-none shadow-sm">
@@ -109,8 +153,19 @@ export default function Dashboard() {
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="text-xl font-bold text-foreground">Physics Midterm</div>
-                    <p className="text-xs text-destructive font-medium mt-1">In 2 days</p>
+                    {upcomingDeadline ? (
+                      <>
+                        <div className="text-xl font-bold text-foreground">{upcomingDeadline.title}</div>
+                        <p className={`text-xs font-medium mt-1 ${upcomingDeadline.daysLeft <= 2 ? 'text-destructive' : 'text-muted-foreground'}`}>
+                          {upcomingDeadline.daysLeft === 0 ? "Due today" : upcomingDeadline.daysLeft === 1 ? "Due tomorrow" : `In ${upcomingDeadline.daysLeft} days`}
+                        </p>
+                      </>
+                    ) : (
+                      <>
+                        <div className="text-xl font-bold text-muted-foreground">No deadlines</div>
+                        <p className="text-xs text-muted-foreground mt-1">Peace of mind!</p>
+                      </>
+                    )}
                   </CardContent>
                 </Card>
               </div>
