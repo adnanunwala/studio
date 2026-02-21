@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useFocusStore } from "@/lib/store";
@@ -8,12 +9,21 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, CheckCircle2, AlertCircle, Clock, Timer } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Calendar, CheckCircle2, AlertCircle, Clock, Timer, Edit2 } from "lucide-react";
 import Link from "next/link";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 
 export default function Dashboard() {
-  const { tasks, sessions, toggleTask, hydrated } = useFocusStore();
+  const { tasks, sessions, majorDeadline, updateMajorDeadline, toggleTask, hydrated } = useFocusStore();
+  
+  // State for deadline editing
+  const [editTitle, setEditTitle] = useState(majorDeadline?.title || "");
+  const [editDate, setEditDate] = useState(majorDeadline?.date || "");
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   const streak = useMemo(() => {
     if (!sessions.length) return 0;
@@ -30,7 +40,6 @@ export default function Dashboard() {
       if (dates.has(dateStr)) {
         count++;
       } else if (i === 0) {
-        // If nothing today, continue checking from yesterday
         continue;
       } else {
         break;
@@ -39,22 +48,24 @@ export default function Dashboard() {
     return count;
   }, [sessions]);
 
-  const upcomingDeadline = useMemo(() => {
-    const activeTasks = tasks
-      .filter(t => !t.completed && t.dueDate)
-      .sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime());
+  const deadlineDisplay = useMemo(() => {
+    if (!majorDeadline || !majorDeadline.date) return null;
     
-    if (!activeTasks.length) return null;
-    
-    const nextTask = activeTasks[0];
-    const diffTime = new Date(nextTask.dueDate).getTime() - new Date().getTime();
+    const diffTime = new Date(majorDeadline.date).getTime() - new Date().setHours(0,0,0,0);
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
     
     return {
-      title: nextTask.title,
+      title: majorDeadline.title,
       daysLeft: diffDays
     };
-  }, [tasks]);
+  }, [majorDeadline]);
+
+  const handleSaveDeadline = () => {
+    if (editTitle && editDate) {
+      updateMajorDeadline({ title: editTitle, date: editDate });
+      setIsDialogOpen(false);
+    }
+  };
 
   if (!hydrated) return null;
 
@@ -145,29 +156,65 @@ export default function Dashboard() {
                     </p>
                   </CardContent>
                 </Card>
-                <Card className="border-none shadow-sm">
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-sm font-medium flex items-center gap-2 text-muted-foreground">
-                      <Calendar className="h-4 w-4" />
-                      Upcoming Deadline
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    {upcomingDeadline ? (
-                      <>
-                        <div className="text-xl font-bold text-foreground">{upcomingDeadline.title}</div>
-                        <p className={`text-xs font-medium mt-1 ${upcomingDeadline.daysLeft <= 2 ? 'text-destructive' : 'text-muted-foreground'}`}>
-                          {upcomingDeadline.daysLeft === 0 ? "Due today" : upcomingDeadline.daysLeft === 1 ? "Due tomorrow" : `In ${upcomingDeadline.daysLeft} days`}
-                        </p>
-                      </>
-                    ) : (
-                      <>
-                        <div className="text-xl font-bold text-muted-foreground">No deadlines</div>
-                        <p className="text-xs text-muted-foreground mt-1">Peace of mind!</p>
-                      </>
-                    )}
-                  </CardContent>
-                </Card>
+                
+                <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                  <DialogTrigger asChild>
+                    <Card className="border-none shadow-sm cursor-pointer hover:bg-accent/5 transition-colors group relative">
+                      <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <Edit2 className="h-3 w-3 text-muted-foreground" />
+                      </div>
+                      <CardHeader className="pb-2">
+                        <CardTitle className="text-sm font-medium flex items-center gap-2 text-muted-foreground">
+                          <Calendar className="h-4 w-4" />
+                          Major Deadline
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        {deadlineDisplay ? (
+                          <>
+                            <div className="text-xl font-bold text-foreground truncate">{deadlineDisplay.title}</div>
+                            <p className={`text-xs font-medium mt-1 ${deadlineDisplay.daysLeft <= 3 ? 'text-destructive font-bold' : 'text-muted-foreground'}`}>
+                              {deadlineDisplay.daysLeft === 0 ? "DUE TODAY" : deadlineDisplay.daysLeft === 1 ? "Due tomorrow" : deadlineDisplay.daysLeft < 0 ? "Past due" : `In ${deadlineDisplay.daysLeft} days`}
+                            </p>
+                          </>
+                        ) : (
+                          <>
+                            <div className="text-xl font-bold text-muted-foreground">Set Deadline</div>
+                            <p className="text-xs text-muted-foreground mt-1">Click to add a milestone</p>
+                          </>
+                        )}
+                      </CardContent>
+                    </Card>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Update Major Deadline</DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4 py-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="deadline-title">Deadline Name</Label>
+                        <Input 
+                          id="deadline-title" 
+                          placeholder="e.g. Physics Midterm" 
+                          value={editTitle}
+                          onChange={(e) => setEditTitle(e.target.value)}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="deadline-date">Target Date</Label>
+                        <Input 
+                          id="deadline-date" 
+                          type="date" 
+                          value={editDate}
+                          onChange={(e) => setEditDate(e.target.value)}
+                        />
+                      </div>
+                    </div>
+                    <DialogFooter>
+                      <Button onClick={handleSaveDeadline} className="w-full bg-primary text-primary-foreground">Save Milestone</Button>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
               </div>
             </div>
 
