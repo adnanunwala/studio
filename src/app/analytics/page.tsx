@@ -68,9 +68,7 @@ export default function AnalyticsPage() {
   // Data for charts
   const studyData = useMemo(() => {
     if (sessions.length === 0) {
-      return [
-        { name: "No Data", value: 1 },
-      ];
+      return [{ name: "No Data", value: 1 }];
     }
     const subjectMap: Record<string, number> = {};
     sessions.forEach(s => {
@@ -97,7 +95,14 @@ export default function AnalyticsPage() {
 
   if (!hydrated) return null;
 
-  const colors = ["#D0BFFF", "#A0C4FF", "#C1E1C1", "#FDFD96", "#FFB7B2"];
+  // Use theme-consistent colors
+  const colors = [
+    "hsl(var(--primary))", 
+    "hsl(var(--secondary))", 
+    "hsl(var(--primary) / 0.6)", 
+    "hsl(var(--secondary) / 0.6)", 
+    "hsl(var(--muted-foreground))"
+  ];
 
   return (
     <div className="min-h-screen bg-background flex">
@@ -190,8 +195,8 @@ export default function AnalyticsPage() {
                 </CardTitle>
                 <CardDescription>Distribution of your focus time.</CardDescription>
               </CardHeader>
-              <CardContent className="h-[300px] flex items-center justify-center">
-                <ChartContainer config={chartConfig} className="h-full w-full">
+              <CardContent className="h-[300px] flex flex-col md:flex-row items-center justify-center gap-4">
+                <ChartContainer config={chartConfig} className="h-48 w-48 shrink-0">
                   <PieChart>
                     <Pie
                       data={studyData}
@@ -201,17 +206,17 @@ export default function AnalyticsPage() {
                       dataKey="value"
                     >
                       {studyData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={colors[index % colors.length]} />
+                        <Cell key={`cell-${index}`} fill={colors[index % colors.length]} stroke="transparent" />
                       ))}
                     </Pie>
                     <ChartTooltip content={<ChartTooltipContent />} />
                   </PieChart>
                 </ChartContainer>
-                <div className="space-y-2 ml-4">
+                <div className="grid grid-cols-2 md:grid-cols-1 gap-2">
                   {studyData.map((item, i) => (
                     <div key={i} className="flex items-center gap-2 text-xs">
                       <div className="h-3 w-3 rounded-full" style={{ backgroundColor: colors[i % colors.length] }} />
-                      <span className="text-muted-foreground font-medium">{item.name}</span>
+                      <span className="text-muted-foreground font-medium truncate max-w-[100px]">{item.name}</span>
                     </div>
                   ))}
                 </div>

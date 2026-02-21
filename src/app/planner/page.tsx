@@ -6,16 +6,23 @@ import { MainNav } from "@/components/layout/main-nav";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { cn } from "@/lib/utils";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
+import { X } from "lucide-react";
 
 const HOURS = Array.from({ length: 18 }, (_, i) => i + 6); // 6 AM to 11 PM
 
 export default function PlannerPage() {
-  const { tasks, hydrated } = useFocusStore();
+  const { tasks, updateTaskSlot, hydrated } = useFocusStore();
 
   if (!hydrated) return null;
 
-  const todayTasks = tasks.filter(t => !t.completed);
+  const unscheduledTasks = tasks.filter(t => !t.completed && !t.timeSlot);
+  
+  const getTasksForHour = (hour: number) => {
+    const slotStr = hour < 10 ? `0${hour}:00` : `${hour}:00`;
+    return tasks.filter(t => t.timeSlot === slotStr && !t.completed);
+  };
 
   return (
     <div className="min-h-screen bg-background flex">
@@ -43,16 +50,34 @@ export default function PlannerPage() {
                     <div className="p-4 space-y-0">
                       {HOURS.map((hour) => {
                         const label = hour > 12 ? `${hour - 12} PM` : hour === 12 ? '12 PM' : `${hour} AM`;
+                        const slotStr = hour < 10 ? `0${hour}:00` : `${hour}:00`;
+                        const tasksInSlot = getTasksForHour(hour);
+
                         return (
                           <div key={hour} className="timeline-grid group">
                             <div className="py-8 pr-4 text-xs font-semibold text-muted-foreground border-r border-border/50 text-right">
                               {label}
                             </div>
-                            <div className="relative border-b border-border/20 p-2 min-h-[60px] hover:bg-accent/10 transition-colors">
-                              {/* Simple placeholder for drag-drop logic UI */}
-                              <div className="text-[10px] text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity">
-                                Click to schedule task
-                              </div>
+                            <div className="relative border-b border-border/20 p-2 min-h-[80px] hover:bg-accent/10 transition-colors flex flex-wrap gap-2 items-center">
+                              {tasksInSlot.length > 0 ? (
+                                tasksInSlot.map(task => (
+                                  <div key={task.id} className="bg-primary/20 border border-primary/30 p-2 rounded-lg text-xs flex items-center gap-2 group/task relative">
+                                    <span className="font-bold">{task.title}</span>
+                                    <Button 
+                                      variant="ghost" 
+                                      size="icon" 
+                                      className="h-4 w-4 rounded-full p-0 hover:bg-destructive hover:text-destructive-foreground opacity-0 group-hover/task:opacity-100 transition-opacity"
+                                      onClick={() => updateTaskSlot(task.id, undefined)}
+                                    >
+                                      <X className="h-3 w-3" />
+                                    </Button>
+                                  </div>
+                                ))
+                              ) : (
+                                <div className="text-[10px] text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity">
+                                  Available Slot
+                                </div>
+                              )}
                             </div>
                           </div>
                         );
@@ -71,13 +96,24 @@ export default function PlannerPage() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
-                  {todayTasks.length === 0 ? (
-                    <p className="text-xs text-muted-foreground text-center py-4">No tasks to schedule.</p>
+                  {unscheduledTasks.length === 0 ? (
+                    <p className="text-xs text-muted-foreground text-center py-4">All tasks scheduled!</p>
                   ) : (
-                    todayTasks.map(task => (
-                      <div key={task.id} className="p-3 bg-background rounded-xl border shadow-sm cursor-grab active:cursor-grabbing hover:border-primary transition-colors">
+                    unscheduledTasks.map(task => (
+                      <div key={task.id} className="p-3 bg-background rounded-xl border shadow-sm space-y-2">
                         <p className="text-sm font-medium truncate">{task.title}</p>
-                        <Badge variant="outline" className="text-[10px] py-0 mt-1">{task.subject}</Badge>
+                        <Select onValueChange={(val) => updateTaskSlot(task.id, val)}>
+                          <SelectTrigger className="h-7 text-[10px] bg-muted/50">
+                            <SelectValue placeholder="Assign Slot" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {HOURS.map(h => {
+                              const l = h > 12 ? `${h - 12} PM` : h === 12 ? '12 PM' : `${h} AM`;
+                              const v = h < 10 ? `0${h}:00` : `${h}:00`;
+                              return <SelectItem key={v} value={v}>{l}</SelectItem>
+                            })}
+                          </SelectContent>
+                        </Select>
                       </div>
                     ))
                   )}
@@ -87,10 +123,10 @@ export default function PlannerPage() {
               <div className="bg-primary/10 rounded-2xl p-4 space-y-2">
                 <h3 className="text-sm font-bold text-primary flex items-center gap-2">
                   <span className="h-2 w-2 rounded-full bg-primary" />
-                  Productivity Tip
+                  Planner Tip
                 </h3>
                 <p className="text-xs text-muted-foreground leading-relaxed">
-                  Time-blocking your sessions can reduce anxiety and keep you focused on one subject at a time.
+                  Assign tasks to specific hours to build a mental commitment to your schedule.
                 </p>
               </div>
             </div>

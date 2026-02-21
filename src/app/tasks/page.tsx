@@ -11,6 +11,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Trash2, Calendar, Tag, AlertCircle, Filter } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 export default function TaskPage() {
   const { tasks, addTask, toggleTask, deleteTask, hydrated } = useFocusStore();
