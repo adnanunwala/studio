@@ -54,7 +54,7 @@ export function useFocusStore() {
   }, [tasks, goals, sessions, hydrated]);
 
   const addTask = (task: Omit<Task, 'id' | 'completed'>) => {
-    const newTask = { ...task, id: Math.random().toString(36).substr(2, 9), completed: false };
+    const newTask: Task = { ...task, id: Math.random().toString(36).substr(2, 9), completed: false };
     setTasks([...tasks, newTask]);
   };
 
@@ -71,5 +71,18 @@ export function useFocusStore() {
     setSessions([...sessions, newSession]);
   };
 
-  return { tasks, goals, sessions, addTask, toggleTask, deleteTask, addSession, hydrated };
+  const addGoal = (goal: Omit<Goal, 'id'>) => {
+    const newGoal = { ...goal, id: Math.random().toString(36).substr(2, 9) };
+    setGoals([...goals, newGoal]);
+  };
+
+  const updateGoal = (id: string, current: number) => {
+    setGoals(goals.map(g => g.id === id ? { ...g, current: Math.max(0, Math.min(current, g.target)) } : g));
+  };
+
+  const deleteGoal = (id: string) => {
+    setGoals(goals.filter(g => g.id !== id));
+  };
+
+  return { tasks, goals, sessions, addTask, toggleTask, deleteTask, addSession, addGoal, updateGoal, deleteGoal, hydrated };
 }
