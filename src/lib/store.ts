@@ -84,5 +84,29 @@ export function useFocusStore() {
     setGoals(goals.filter(g => g.id !== id));
   };
 
-  return { tasks, goals, sessions, addTask, toggleTask, deleteTask, addSession, addGoal, updateGoal, deleteGoal, hydrated };
+  const clearAll = () => {
+    setTasks([]);
+    setGoals([]);
+    setSessions([]);
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('focusflow_tasks');
+      localStorage.removeItem('focusflow_goals');
+      localStorage.removeItem('focusflow_sessions');
+    }
+  };
+
+  return { 
+    tasks, 
+    goals, 
+    sessions, 
+    addTask, 
+    toggleTask, 
+    deleteTask, 
+    addSession, 
+    addGoal, 
+    updateGoal, 
+    deleteGoal, 
+    clearAll,
+    hydrated 
+  };
 }
