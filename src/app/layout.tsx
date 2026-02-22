@@ -21,7 +21,7 @@ export default function RootLayout({
       <head>
         <meta
           name="google-site-verification"
-          content="PASTE_YOUR_GOOGLE_CODE_HERE"
+          content="STUDIO_VERIFICATION_CODE_HERE"
         />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
