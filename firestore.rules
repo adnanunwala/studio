@@ -7,22 +7,6 @@ service cloud.firestore {
      * 
      * Core Philosophy: This ruleset enforces a strict user-ownership model where all data is
      * logically and physically partitioned by the user's unique authentication ID (UID).
-     * 
-     * Data Structure: All application entities are organized hierarchically under the 
-     * /user_profiles/{userId} path. This ensures that a user's entire data tree is 
-     * isolated from others.
-     * 
-     * Key Security Decisions:
-     * 1. Authorization Independence: Every document contains a 'userId' (or 'id' for the profile) 
-     *    field that must match the path parameter and the authenticated user's UID. This allows 
-     *    for high-performance rules that do not require cross-document lookups (get() calls).
-     * 2. Strict Ownership: No data is shared between users in this version. Users can only 
-     *    read or write data within their own tree.
-     * 3. Prototyping Flexibility: While ownership is strictly enforced, the internal schema 
-     *    of the data (fields like 'title', 'description', etc.) is not validated to allow 
-     *    for rapid frontend iteration.
-     * 4. Relational Integrity: On creation and update, the rules ensure that the links 
-     *    between the document and its owner remain consistent and immutable.
      */
 
     // --- Helper Functions ---
@@ -37,94 +21,22 @@ service cloud.firestore {
       return isSignedIn() && request.auth.uid == userId;
     }
 
-    /** @description Verifies ownership and ensures the document exists for state-changing operations. */
-    function isExistingOwner(userId) {
-      return isOwner(userId) && resource != null;
-    }
-
     // --- Collection Rules ---
 
     /**
-     * @description Rules for the root UserProfile entity. Allows users to manage their own settings.
-     * @path /user_profiles/{userId}
-     * @allow (get) If the requester is the owner of the profile.
-     * @deny (create) If the document ID does not match the authenticated user's UID.
-     * @principle Implements the Self-Creation pattern and ensures path-to-data consistency.
+     * @description Rules for the user_profiles collection and its subcollections.
+     * Implements a recursive ownership model: if you own the parent path, you own the data.
      */
     match /user_profiles/{userId} {
-      allow get, list: if isOwner(userId);
-      allow create: if isOwner(userId) && request.resource.data.id == userId;
-      allow update: if isExistingOwner(userId) && request.resource.data.id == resource.data.id;
-      allow delete: if isExistingOwner(userId);
+      // Allow the owner to read and write their own profile document
+      allow read, write: if isOwner(userId);
 
       /**
-       * @description Subcollection for user-defined tasks.
-       * @path /user_profiles/{userId}/tasks/{taskId}
-       * @allow (list) Owner listing their own tasks.
-       * @deny (update) Attempting to change the 'userId' field of an existing task.
-       * @principle Validates relational integrity by binding the document to the parent user path.
+       * @description Matches all subcollections (tasks, study_sessions, goals, etc.)
+       * and enforces that the requester must be the owner of the parent profile.
        */
-      match /tasks/{taskId} {
-        allow get, list: if isOwner(userId);
-        allow create: if isOwner(userId) && request.resource.data.userId == userId;
-        allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
-        allow delete: if isExistingOwner(userId);
-      }
-
-      /**
-       * @description Subcollection for user-defined subject tags.
-       * @path /user_profiles/{userId}/subject_tags/{subjectTagId}
-       * @allow (create) Owner creating a tag with their own userId.
-       * @deny (get) Non-owner attempting to access a specific tag.
-       * @principle Ensures private access to user-specific categorization metadata.
-       */
-      match /subject_tags/{subjectTagId} {
-        allow get, list: if isOwner(userId);
-        allow create: if isOwner(userId) && request.resource.data.userId == userId;
-        allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
-        allow delete: if isExistingOwner(userId);
-      }
-
-      /**
-       * @description Subcollection for timer study and break sessions.
-       * @path /user_profiles/{userId}/study_sessions/{sessionId}
-       * @allow (list) Owner querying their session history.
-       * @deny (delete) Attempting to delete a session that does not exist.
-       * @principle Restricts access to sensitive activity logs to the authenticated owner.
-       */
-      match /study_sessions/{sessionId} {
-        allow get, list: if isOwner(userId);
-        allow create: if isOwner(userId) && request.resource.data.userId == userId;
-        allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
-        allow delete: if isExistingOwner(userId);
-      }
-
-      /**
-       * @description Subcollection for tracking user progress toward goals.
-       * @path /user_profiles/{userId}/goals/{goalId}
-       * @allow (update) Owner updating their goal progress.
-       * @deny (create) Attempting to create a goal for a different user.
-       * @principle Enforces strict ownership over progress and performance data.
-       */
-      match /goals/{goalId} {
-        allow get, list: if isOwner(userId);
-        allow create: if isOwner(userId) && request.resource.data.userId == userId;
-        allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
-        allow delete: if isExistingOwner(userId);
-      }
-
-      /**
-       * @description Subcollection for daily planner and schedule entries.
-       * @path /user_profiles/{userId}/daily_schedule_entries/{scheduleEntryId}
-       * @allow (get) Owner viewing a specific schedule item.
-       * @deny (list) Anonymous or mismatched user attempting to read the schedule.
-       * @principle Maintains the privacy of a user's daily time management and scheduling.
-       */
-      match /daily_schedule_entries/{scheduleEntryId} {
-        allow get, list: if isOwner(userId);
-        allow create: if isOwner(userId) && request.resource.data.userId == userId;
-        allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
-        allow delete: if isExistingOwner(userId);
+      match /{allSubcollections=**} {
+        allow read, write: if isOwner(userId);
       }
     }
   }

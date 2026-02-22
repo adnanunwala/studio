@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
@@ -181,17 +180,18 @@ export function FocusProvider({ children }: { children: ReactNode }) {
 
   const updateMajorDeadline = (deadline: Omit<MajorDeadline, 'id'> | null) => {
     if (!user || !profileRef) return;
-    updateDocumentNonBlocking(profileRef, { 
+    // Use setDocumentNonBlocking with merge to ensure doc exists
+    setDocumentNonBlocking(profileRef, { 
       majorDeadline: deadline,
+      id: user.uid,
       updatedAt: serverTimestamp()
-    });
+    }, { merge: true });
   };
 
   const clearAll = async () => {
     if (!user) return;
-    // Clearing cloud data is usually restricted in UI, 
-    // but here we can implement a sequential deletion if needed.
-    // For MVP, we'll focus on the data existing.
+    // In a cloud-sync app, "clear all" would typically involve deleting all docs in subcollections.
+    // This is left as an extension for full account reset.
   };
 
   return (

@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useFocusStore } from "@/lib/store";
@@ -13,7 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { Calendar, CheckCircle2, AlertCircle, Clock, Timer, Edit2 } from "lucide-react";
+import { Calendar, CheckCircle2, AlertCircle, Clock, Timer as TimerIcon, Edit2 } from "lucide-react";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 
@@ -223,7 +222,7 @@ export default function Dashboard() {
               <Card className="border-none shadow-sm bg-primary/10">
                 <CardHeader>
                   <CardTitle className="text-sm font-semibold flex items-center gap-2">
-                    <Timer className="h-4 w-4 text-primary" />
+                    <TimerIcon className="h-4 w-4 text-primary" />
                     Quick Timer
                   </CardTitle>
                 </CardHeader>
