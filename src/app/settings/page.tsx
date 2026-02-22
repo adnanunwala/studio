@@ -5,20 +5,44 @@ import { useFocusStore } from "@/lib/store";
 import { MainNav } from "@/components/layout/main-nav";
 import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Trash2, ShieldAlert, Settings } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Trash2, ShieldAlert, Settings, Timer } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useState, useEffect } from "react";
 
 export default function SettingsPage() {
-  const { clearAll, hydrated } = useFocusStore();
+  const { timerSettings, updateTimerSettings, clearAll, hydrated } = useFocusStore();
   const { toast } = useToast();
+  
+  const [focusTime, setFocusTime] = useState(timerSettings.focusDuration);
+  const [breakTime, setBreakTime] = useState(timerSettings.breakDuration);
+
+  useEffect(() => {
+    if (hydrated) {
+      setFocusTime(timerSettings.focusDuration);
+      setBreakTime(timerSettings.breakDuration);
+    }
+  }, [hydrated, timerSettings]);
 
   if (!hydrated) return null;
+
+  const handleSaveTimer = () => {
+    updateTimerSettings({
+      focusDuration: Number(focusTime),
+      breakDuration: Number(breakTime)
+    });
+    toast({
+      title: "Settings Saved",
+      description: "Your study timer preferences have been updated.",
+    });
+  };
 
   const handleReset = () => {
     clearAll();
     toast({
       title: "Data Reset",
-      description: "All your tasks, goals, and sessions have been cleared.",
+      description: "All your local application state has been cleared.",
     });
   };
 
@@ -38,6 +62,41 @@ export default function SettingsPage() {
           <div className="space-y-6">
             <Card className="border-none shadow-sm">
               <CardHeader>
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <Timer className="h-5 w-5 text-primary" />
+                  Timer Settings
+                </CardTitle>
+                <CardDescription>Customize your default focus and break intervals.</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="focus-duration">Focus Duration (min)</Label>
+                    <Input 
+                      id="focus-duration" 
+                      type="number" 
+                      value={focusTime} 
+                      onChange={(e) => setFocusTime(Number(e.target.value))} 
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="break-duration">Break Duration (min)</Label>
+                    <Input 
+                      id="break-duration" 
+                      type="number" 
+                      value={breakTime} 
+                      onChange={(e) => setBreakTime(Number(e.target.value))} 
+                    />
+                  </div>
+                </div>
+              </CardContent>
+              <CardFooter>
+                <Button onClick={handleSaveTimer} className="font-bold">Save Timer Settings</Button>
+              </CardFooter>
+            </Card>
+
+            <Card className="border-none shadow-sm">
+              <CardHeader>
                 <CardTitle className="text-lg">General Preferences</CardTitle>
                 <CardDescription>Configure how FocusFlow works for you.</CardDescription>
               </CardHeader>
@@ -47,14 +106,7 @@ export default function SettingsPage() {
                     <p className="text-sm font-medium">Auto-save to Cloud</p>
                     <p className="text-xs text-muted-foreground">Sync your data across multiple devices automatically.</p>
                   </div>
-                  <div className="text-xs font-bold text-primary uppercase bg-primary/10 px-2 py-1 rounded">Coming Soon</div>
-                </div>
-                <div className="flex items-center justify-between py-2 border-b">
-                  <div>
-                    <p className="text-sm font-medium">Theme Mode</p>
-                    <p className="text-xs text-muted-foreground">Switch between light, dark, and system themes.</p>
-                  </div>
-                  <div className="text-xs font-bold text-primary uppercase bg-primary/10 px-2 py-1 rounded">System Default</div>
+                  <div className="text-xs font-bold text-primary uppercase bg-primary/10 px-2 py-1 rounded">Enabled</div>
                 </div>
               </CardContent>
             </Card>
@@ -71,7 +123,7 @@ export default function SettingsPage() {
               </CardHeader>
               <CardContent>
                 <p className="text-sm text-muted-foreground">
-                  This will permanently delete all your tasks, goals, study sessions, and progress history from this device.
+                  This will permanently delete your session history and goals from this device.
                 </p>
               </CardContent>
               <CardFooter className="pt-2">
@@ -80,7 +132,7 @@ export default function SettingsPage() {
                   onClick={handleReset}
                   className="font-bold w-full md:w-auto"
                 >
-                  <Trash2 className="h-4 w-4 mr-2" /> Reset All Local Data
+                  <Trash2 className="h-4 w-4 mr-2" /> Reset Application Data
                 </Button>
               </CardFooter>
             </Card>

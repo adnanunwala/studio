@@ -6,23 +6,31 @@ import { useFocusStore } from "@/lib/store";
 import { MainNav } from "@/components/layout/main-nav";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Play, Pause, RotateCcw, Coffee, Brain, Bell } from "lucide-react";
+import { Play, Pause, RotateCcw, Coffee, Brain, Bell, Settings } from "lucide-react";
 import { cn } from "@/lib/utils";
+import Link from "next/link";
 
 export default function TimerPage() {
-  const { addSession, hydrated } = useFocusStore();
-  const [timeLeft, setTimeLeft] = useState(25 * 60);
+  const { addSession, timerSettings, hydrated } = useFocusStore();
+  
+  const [timeLeft, setTimeLeft] = useState(timerSettings.focusDuration * 60);
   const [isActive, setIsActive] = useState(false);
   const [mode, setMode] = useState<'focus' | 'break'>('focus');
   const [sessionsCompleted, setSessionsCompleted] = useState(0);
+
+  // Sync with store settings when they load or change
+  useEffect(() => {
+    if (hydrated && !isActive) {
+      setTimeLeft(mode === 'focus' ? timerSettings.focusDuration * 60 : timerSettings.breakDuration * 60);
+    }
+  }, [timerSettings, mode, hydrated, isActive]);
 
   const toggleTimer = () => setIsActive(!isActive);
 
   const resetTimer = useCallback(() => {
     setIsActive(false);
-    setTimeLeft(mode === 'focus' ? 25 * 60 : 5 * 60);
-  }, [mode]);
+    setTimeLeft(mode === 'focus' ? timerSettings.focusDuration * 60 : timerSettings.breakDuration * 60);
+  }, [mode, timerSettings]);
 
   useEffect(() => {
     let interval: any = null;
@@ -32,7 +40,7 @@ export default function TimerPage() {
       }, 1000);
     } else if (timeLeft === 0) {
       setIsActive(false);
-      // Notify
+      
       if (typeof window !== 'undefined') {
         const audio = new Audio("https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3");
         audio.play().catch(e => console.log("Audio play blocked"));
@@ -42,19 +50,19 @@ export default function TimerPage() {
         setSessionsCompleted(s => s + 1);
         addSession({
           date: new Date().toISOString().split('T')[0],
-          duration: 25,
+          duration: timerSettings.focusDuration,
           subject: "Timer Session",
           productivity: 5
         });
         setMode('break');
-        setTimeLeft(5 * 60);
+        setTimeLeft(timerSettings.breakDuration * 60);
       } else {
         setMode('focus');
-        setTimeLeft(25 * 60);
+        setTimeLeft(timerSettings.focusDuration * 60);
       }
     }
     return () => clearInterval(interval);
-  }, [isActive, timeLeft, mode, addSession]);
+  }, [isActive, timeLeft, mode, addSession, timerSettings]);
 
   const minutes = Math.floor(timeLeft / 60);
   const seconds = timeLeft % 60;
@@ -66,30 +74,32 @@ export default function TimerPage() {
       <MainNav />
       <main className="flex-1 md:ml-64 p-4 md:p-8 flex flex-col items-center justify-center">
         <div className="max-w-md w-full space-y-12 text-center">
-          <header>
+          <header className="relative">
             <h1 className="text-3xl font-headline font-bold text-foreground">Deep Focus</h1>
             <p className="text-muted-foreground">Master your time, one session at a time.</p>
+            <Link href="/settings" className="absolute -top-4 -right-4 md:right-0 p-2 text-muted-foreground hover:text-primary transition-colors">
+              <Settings className="h-5 w-5" />
+            </Link>
           </header>
 
           <div className="flex items-center justify-center gap-4 bg-muted/30 p-2 rounded-2xl w-fit mx-auto">
             <Button 
               variant={mode === 'focus' ? "default" : "ghost"}
-              onClick={() => { setMode('focus'); setTimeLeft(25*60); setIsActive(false); }}
+              onClick={() => { setMode('focus'); setIsActive(false); }}
               className={cn("rounded-xl transition-all", mode === 'focus' ? "bg-primary text-primary-foreground shadow-md" : "")}
             >
-              <Brain className="h-4 w-4 mr-2" /> Focus
+              <Brain className="h-4 w-4 mr-2" /> Focus ({timerSettings.focusDuration}m)
             </Button>
             <Button 
               variant={mode === 'break' ? "default" : "ghost"}
-              onClick={() => { setMode('break'); setTimeLeft(5*60); setIsActive(false); }}
+              onClick={() => { setMode('break'); setIsActive(false); }}
               className={cn("rounded-xl transition-all", mode === 'break' ? "bg-secondary text-secondary-foreground shadow-md" : "")}
             >
-              <Coffee className="h-4 w-4 mr-2" /> Break
+              <Coffee className="h-4 w-4 mr-2" /> Break ({timerSettings.breakDuration}m)
             </Button>
           </div>
 
           <div className="relative flex items-center justify-center">
-             {/* Progress Circle Visual */}
             <svg className="w-80 h-80 -rotate-90">
               <circle
                 cx="160" cy="160" r="150"
@@ -104,7 +114,7 @@ export default function TimerPage() {
                 )}
                 strokeWidth="12"
                 strokeDasharray={150 * 2 * Math.PI}
-                strokeDashoffset={(150 * 2 * Math.PI) * (1 - timeLeft / (mode === 'focus' ? 25*60 : 5*60))}
+                strokeDashoffset={(150 * 2 * Math.PI) * (1 - timeLeft / ((mode === 'focus' ? timerSettings.focusDuration : timerSettings.breakDuration) * 60))}
                 strokeLinecap="round"
               />
             </svg>

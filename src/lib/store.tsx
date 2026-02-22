@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
@@ -40,11 +41,17 @@ export interface MajorDeadline {
   id: string;
 }
 
+export interface TimerSettings {
+  focusDuration: number;
+  breakDuration: number;
+}
+
 interface FocusContextType {
   tasks: Task[];
   goals: Goal[];
   sessions: StudySession[];
   majorDeadline: MajorDeadline | null;
+  timerSettings: TimerSettings;
   hydrated: boolean;
   addTask: (task: Omit<Task, 'id' | 'completed' | 'userId'>) => void;
   toggleTask: (id: string) => void;
@@ -55,6 +62,7 @@ interface FocusContextType {
   updateGoal: (id: string, current: number) => void;
   deleteGoal: (id: string) => void;
   updateMajorDeadline: (deadline: Omit<MajorDeadline, 'id'> | null) => void;
+  updateTimerSettings: (settings: TimerSettings) => void;
   clearAll: () => void;
 }
 
@@ -180,7 +188,6 @@ export function FocusProvider({ children }: { children: ReactNode }) {
 
   const updateMajorDeadline = (deadline: Omit<MajorDeadline, 'id'> | null) => {
     if (!user || !profileRef) return;
-    // Use setDocumentNonBlocking with merge to ensure doc exists
     setDocumentNonBlocking(profileRef, { 
       majorDeadline: deadline,
       id: user.uid,
@@ -188,10 +195,23 @@ export function FocusProvider({ children }: { children: ReactNode }) {
     }, { merge: true });
   };
 
+  const updateTimerSettings = (settings: TimerSettings) => {
+    if (!user || !profileRef) return;
+    setDocumentNonBlocking(profileRef, { 
+      customFocusDurationMinutes: settings.focusDuration,
+      customBreakDurationMinutes: settings.breakDuration,
+      id: user.uid,
+      updatedAt: serverTimestamp()
+    }, { merge: true });
+  };
+
   const clearAll = async () => {
     if (!user) return;
-    // In a cloud-sync app, "clear all" would typically involve deleting all docs in subcollections.
-    // This is left as an extension for full account reset.
+  };
+
+  const timerSettings: TimerSettings = {
+    focusDuration: profileData?.customFocusDurationMinutes || 25,
+    breakDuration: profileData?.customBreakDurationMinutes || 5,
   };
 
   return (
@@ -200,10 +220,11 @@ export function FocusProvider({ children }: { children: ReactNode }) {
       goals: goalsData || [], 
       sessions: sessionsData || [], 
       majorDeadline: profileData?.majorDeadline || null, 
+      timerSettings,
       hydrated,
       addTask, toggleTask, deleteTask, updateTaskSlot,
       addSession, addGoal, updateGoal, deleteGoal, 
-      updateMajorDeadline, clearAll 
+      updateMajorDeadline, updateTimerSettings, clearAll 
     }}>
       {children}
     </FocusContext.Provider>

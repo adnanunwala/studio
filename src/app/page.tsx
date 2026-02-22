@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useFocusStore } from "@/lib/store";
@@ -19,7 +20,6 @@ import { useMemo, useState } from "react";
 export default function Dashboard() {
   const { tasks, sessions, majorDeadline, updateMajorDeadline, toggleTask, hydrated } = useFocusStore();
   
-  // State for deadline editing
   const [editTitle, setEditTitle] = useState(majorDeadline?.title || "");
   const [editDate, setEditDate] = useState(majorDeadline?.date || "");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -227,7 +227,7 @@ export default function Dashboard() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <p className="text-xs text-muted-foreground">Start a 25-minute Pomodoro session now.</p>
+                  <p className="text-xs text-muted-foreground">Start your personalized focus session now.</p>
                   <Link href="/timer">
                     <button className="w-full bg-primary text-primary-foreground font-bold py-2 rounded-xl text-sm hover:opacity-90 transition-opacity">
                       Go to Study Timer
